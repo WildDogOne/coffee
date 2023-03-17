@@ -6,7 +6,7 @@ from general import logger
 
 
 def disable_plug(p):
-    if float(p.power) == 0 and float(p.current) == 0:
+    if p.power == 0 and p.current == 0:
         logger.info("Already Off")
     else:
         logger.info("Turning off")

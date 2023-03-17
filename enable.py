@@ -3,13 +3,18 @@ import time
 from ediplug import SmartPlug
 from creds import *
 from general import logger
+from tkinter import *
+from tkinter import messagebox
+
 
 def enable_plug(p):
-    if float(p.power == 0) and float(p.current == 0):
-        logger.info("Turning on")
+    logger.debug(f"Enabling: {p.power} - {p.current}")
+    if p.power == 0 and p.current == 0:
+        logger.debug("Turning on")
         p.state = "ON"
     else:
-        logger.info("Already on")
+        logger.debug("Already on")
+    logger.info("Turned on Smartplug")
     return True
 
 
@@ -20,21 +25,24 @@ def watch_heatup(p):
         time.sleep(10)
         power = float(p.power)
         current = float(p.current)
-        print(f"{power} w - {current} a")
+        logger.info(f"{power} w - {current} a")
         if power < 1000 and current < 6:
             check_down += 1
         elif check_down > 0:
             check_down -= 1
         if check_down == 10:
             logger.info("Coffee Maker Ready")
+            top = Tk()
+            top.geometry("100x100")
+            messagebox.showinfo("information", "Coffee Maker Ready")
+            top.mainloop()
             go = False
         else:
-            print(check_down)
+            logger.debug(f"Watt Check: {check_down}")
 
 
 def main():
     p = SmartPlug(host, (login, password))
-
     if enable_plug(p):
         watch_heatup(p)
 

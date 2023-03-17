@@ -1,17 +1,6 @@
-import time
-
 from ediplug import SmartPlug
-from creds import *
-from general import logger
-
-
-def disable_plug(p):
-    if p.power == 0 and p.current == 0:
-        logger.info("Already Off")
-    else:
-        logger.info("Turning off")
-        p.state = "OFF"
-    return True
+from data.creds import *
+from data.functions import disable_plug
 
 
 def main():

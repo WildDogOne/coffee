@@ -1,3 +1,4 @@
 git+https://github.com/WildDogOne/ediplug-py.git
 requests
 rich
+python-telegram-bot

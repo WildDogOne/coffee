@@ -1,6 +1,6 @@
 from ediplug import SmartPlug
 
-from data.creds import telegram_token, host, login, password
+from data.creds import telegram_token, host, login, password, userid
 from data.functions import disable_plug, enable_plug, watch_heatup
 from data.general import logger
 
@@ -23,14 +23,17 @@ from telegram.ext import Application, CommandHandler, ContextTypes
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Sends explanation on how to use the bot."""
-    await update.message.reply_text("Hi! Use /enable to start the coffee-machine")
+    await update.message.reply_text("Hi!\n"
+                                    "Use /on to start the coffee-machine\n"
+                                    "Use /off to stop the coffee-machine\n"
+                                    "Or user /status to get the current power consumption")
 
 
-async def enable(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def on(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Add a job to the queue."""
     user = update.effective_user.id
     try:
-        if user == 35070363:
+        if user == userid:
             p = SmartPlug(host, (login, password))
             if enable_plug(p):
                 await update.effective_message.reply_text(f"Turned on the Coffeemaker")
@@ -44,10 +47,10 @@ async def enable(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         await update.effective_message.reply_text("Error")
 
 
-async def disable(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def off(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user = update.effective_user.id
     try:
-        if user == 35070363:
+        if user == userid:
             p = SmartPlug(host, (login, password))
             await update.effective_message.reply_text(disable_plug(p))
         else:
@@ -59,7 +62,7 @@ async def disable(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 async def status(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user = update.effective_user.id
     try:
-        if user == 35070363:
+        if user == userid:
             p = SmartPlug(host, (login, password))
             await update.effective_message.reply_text(f"Power: {p.power}w\nCurrent: {p.current}a")
         else:
@@ -75,8 +78,8 @@ def main() -> None:
 
     # on different commands - answer in Telegram
     application.add_handler(CommandHandler(["start", "help"], start))
-    application.add_handler(CommandHandler("enable", enable))
-    application.add_handler(CommandHandler("disable", disable))
+    application.add_handler(CommandHandler("on", on))
+    application.add_handler(CommandHandler("off", off))
     application.add_handler(CommandHandler("status", status))
 
     # Run the bot until the user presses Ctrl-C

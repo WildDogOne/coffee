@@ -1,3 +1,5 @@
+import asyncio
+
 from ediplug import SmartPlug
 
 from data.creds import telegram_token, host, login, password, userid
@@ -29,8 +31,30 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
                                     "Or user /status to get the current power consumption")
 
 
+async def heatup(chat_id: int, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Send the alarm message."""
+    job = context.job
+    p = SmartPlug(host, (login, password))
+    go = True
+    check_down = 0
+    while go:
+        await asyncio.sleep(10)
+        power = float(p.power)
+        current = float(p.current)
+        logger.info(f"{power} w - {current} a")
+        if power < 1000 and current < 6:
+            check_down += 1
+        elif check_down > 0:
+            check_down -= 1
+        if check_down == 10:
+            logger.info("Coffee Maker Ready")
+            go = False
+        else:
+            logger.debug(f"Watt Check: {check_down}")
+    await context.bot.send_message(chat_id, text=f"Heatup Done!")
+
+
 async def on(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Add a job to the queue."""
     user = update.effective_user.id
     try:
         if user == userid:
@@ -38,11 +62,10 @@ async def on(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             if enable_plug(p):
                 await update.effective_message.reply_text(f"Turned on the Coffeemaker")
                 await update.effective_message.reply_text(f"Now waiting for heatup to complete")
-                if watch_heatup(p):
-                    await update.effective_message.reply_text(f"Heatup Done!")
+                asyncio.create_task(heatup(user, context=context))
         else:
             await update.effective_message.reply_text("You are not allowed to use this bot")
-            await update.effective_message.reply_text(f"User ID: {user}")
+            # await update.effective_message.reply_text(f"User ID: {user}")
     except (IndexError, ValueError):
         await update.effective_message.reply_text("Error")
 

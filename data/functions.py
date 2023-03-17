@@ -35,6 +35,7 @@ def watch_heatup(p):
 def disable_plug(p):
     if p.power == 0 and p.current == 0:
         logger.info("Already Off")
+        p.state = "OFF"
         return "Already Off"
     else:
         logger.info("Turning off")

@@ -5,7 +5,7 @@ from creds import *
 from general import logger
 
 def enable_plug(p):
-    if p.power == 0 and p.current == 0:
+    if float(p.power == 0) and float(p.current == 0):
         logger.info("Turning on")
         p.state = "ON"
     else:

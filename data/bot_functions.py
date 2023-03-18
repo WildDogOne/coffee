@@ -53,9 +53,9 @@ async def heatup(chat_id: int, update: Update, context: ContextTypes.DEFAULT_TYP
     else:
         await context.bot.send_message(chat_id, text=f"Heatup Stopped!")
 
-    await asyncio.sleep(timeout)
+    await asyncio.sleep(timeout * 60)
     if heating:
-        await context.bot.send_message(chat_id, text=f"Forgot to turn off machine!")
+        await context.bot.send_message(chat_id, text=f"Forgot to turn off machine!\nTurning off now")
         await off(update=update, context=context)
 
 

@@ -22,6 +22,10 @@ if __version_info__ < (20, 0, 0, "alpha", 1):
 from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes
 
+# Dirty hack variable to check if machine is heating up or not.
+# Used to break the heatup task
+heating = False
+
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Sends explanation on how to use the bot."""
@@ -32,12 +36,13 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 
 async def heatup(chat_id: int, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Send the alarm message."""
-    job = context.job
+    global heating
+    heating = True
+
     p = SmartPlug(host, (login, password))
     go = True
     check_down = 0
-    while go:
+    while go and heating:
         await asyncio.sleep(10)
         power = float(p.power)
         current = float(p.current)
@@ -51,7 +56,10 @@ async def heatup(chat_id: int, context: ContextTypes.DEFAULT_TYPE) -> None:
             go = False
         else:
             logger.debug(f"Watt Check: {check_down}")
-    await context.bot.send_message(chat_id, text=f"Heatup Done!")
+    if heating:
+        await context.bot.send_message(chat_id, text=f"Heatup Done!")
+    else:
+        await context.bot.send_message(chat_id, text=f"Heatup Stopped!")
 
 
 async def on(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -59,19 +67,24 @@ async def on(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     try:
         if user == userid:
             p = SmartPlug(host, (login, password))
-            if enable_plug(p):
-                await update.effective_message.reply_text(f"Turned on the Coffeemaker")
-                await update.effective_message.reply_text(f"Now waiting for heatup to complete")
-                asyncio.create_task(heatup(user, context=context))
+            # context.task = asyncio.create_task(heatup(user, context=context))
+            if heating:
+                await update.effective_message.reply_text(f"Already heating up, be patient!")
+            else:
+                if enable_plug(p):
+                    await update.effective_message.reply_text(f"Turned on the Coffeemaker")
+                    await update.effective_message.reply_text(f"Now waiting for heatup to complete")
+                    context.application.create_task(heatup(user, context=context), update=update)
         else:
             await update.effective_message.reply_text("You are not allowed to use this bot")
-            # await update.effective_message.reply_text(f"User ID: {user}")
     except (IndexError, ValueError):
         await update.effective_message.reply_text("Error")
 
 
 async def off(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user = update.effective_user.id
+    global heating
+    heating = False
     try:
         if user == userid:
             p = SmartPlug(host, (login, password))
@@ -101,7 +114,7 @@ def main() -> None:
 
     # on different commands - answer in Telegram
     application.add_handler(CommandHandler(["start", "help"], start))
-    application.add_handler(CommandHandler("on", on))
+    application.add_handler(CommandHandler("on", on, block=False))
     application.add_handler(CommandHandler("off", off))
     application.add_handler(CommandHandler("status", status))
 

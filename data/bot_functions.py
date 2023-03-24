@@ -68,7 +68,7 @@ async def on(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             await update.effective_message.reply_text("Usage: /on <minutes> or just /on")
             return
     else:
-        timeout = 10
+        timeout = 15
     try:
         if user == userid:
             p = SmartPlug(host, (login, password))

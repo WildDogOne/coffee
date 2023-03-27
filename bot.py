@@ -1,4 +1,4 @@
-from data.bot_functions import on, off, status, start
+from data.bot_functions import on, off, status, start, cancel
 from data.creds import telegram_token
 
 from telegram import __version__ as TG_VER
@@ -27,6 +27,7 @@ def main() -> None:
     application.add_handler(CommandHandler(["start", "help"], start))
     application.add_handler(CommandHandler("on", on, block=False))
     application.add_handler(CommandHandler("off", off))
+    application.add_handler(CommandHandler("cancel", cancel))
     application.add_handler(CommandHandler("status", status))
 
     # Run the bot until the user presses Ctrl-C

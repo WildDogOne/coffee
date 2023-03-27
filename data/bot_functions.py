@@ -40,7 +40,13 @@ def restricted(func):
     return wrapped
 
 
-@restricted
+class CustomApplication(Application):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.heatup_task = None
+
+
+# @restricted
 async def heatup(chat_id: int, update: Update, context: ContextTypes.DEFAULT_TYPE, timeout: int = 10) -> None:
     global heating
     heating = True
@@ -73,7 +79,7 @@ async def heatup(chat_id: int, update: Update, context: ContextTypes.DEFAULT_TYP
         await off(update=update, context=context)
 
 
-@restricted
+# @restricted
 async def on(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user = update.effective_user.id
     if len(context.args) > 0:
@@ -94,19 +100,19 @@ async def on(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
                 enable_plug(p)
                 await update.effective_message.reply_text(f"Turned on the Coffeemaker")
                 await update.effective_message.reply_text(f"Now waiting for heatup to complete")
-                context.application.create_task(heatup(user, context=context, timeout=timeout, update=update),
-                                                update=update)
+                # context.application.create_task(heatup(user, context=context, timeout=timeout, update=update),update=update)
+                context.application.heatup_task = context.application.create_task(
+                    heatup(user, context=context, timeout=timeout, update=update))
         else:
             await update.effective_message.reply_text("You are not allowed to use this bot")
     except (IndexError, ValueError):
         await update.effective_message.reply_text("Error")
 
 
-@restricted
+# @restricted
 async def off(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user = update.effective_user.id
-    global heating
-    heating = False
+    context.application.heatup_task.cancel()
     try:
         if user == userid:
             p = SmartPlug(host, (login, password))
@@ -117,7 +123,7 @@ async def off(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         await update.effective_message.reply_text("Error")
 
 
-@restricted
+# @restricted
 async def status(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user = update.effective_user.id
     try:
@@ -130,7 +136,20 @@ async def status(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         await update.effective_message.reply_text("Error")
 
 
-@restricted
+# @restricted
+async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    user = update.effective_user.id
+    if user == userid:
+        if context.application.heatup_task and not context.application.heatup_task.done():
+            context.application.heatup_task.cancel()
+            await update.effective_message.reply_text("Heatup cancelled.")
+        else:
+            await update.effective_message.reply_text("No ongoing heatup task to cancel.")
+    else:
+        await update.effective_message.reply_text("You are not allowed to use this bot")
+
+
+# @restricted
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Sends explanation on how to use the bot."""
     await update.message.reply_text("Hi!\n"

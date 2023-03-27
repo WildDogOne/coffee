@@ -107,7 +107,10 @@ async def on(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 @restricted
 async def off(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    context.application.heatup_task.cancel()
+    try:
+        context.application.heatup_task.cancel()
+    except:
+        await update.effective_message.reply_text("No heatup running")
     global heating
     heating = False
     try:

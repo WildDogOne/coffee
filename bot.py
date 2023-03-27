@@ -23,6 +23,13 @@ def main() -> None:
     # Create the Application and pass it your bot's token.
     application = Application.builder().token(telegram_token).build()
 
+    """
+    Bot Menu Config
+    on - Turn on Coffee Machine
+    off - Turn off Coffee Machine
+    status - Get current power consumption
+    cancel - Cancle Heatup Task while leaving Coffee Machine on
+    """
     # on different commands - answer in Telegram
     application.add_handler(CommandHandler(["start", "help"], start))
     application.add_handler(CommandHandler("on", on, block=False))

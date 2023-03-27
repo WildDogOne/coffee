@@ -18,7 +18,7 @@ turn the coffee machine on and off, cancel the heat-up process, and check the ma
 ## Dependencies
 
 - `python-telegram-bot`
-- `edi-plug```
+- `edi-plug`
 
 To install the dependencies, run:
 

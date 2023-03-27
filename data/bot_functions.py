@@ -140,10 +140,13 @@ async def status(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user = update.effective_user.id
     if user == userid:
-        if context.application.heatup_task and not context.application.heatup_task.done():
-            context.application.heatup_task.cancel()
-            await update.effective_message.reply_text("Heatup cancelled.")
-        else:
+        try:
+            if context.application.heatup_task and not context.application.heatup_task.done():
+                context.application.heatup_task.cancel()
+                await update.effective_message.reply_text("Heatup cancelled.")
+            else:
+                await update.effective_message.reply_text("No ongoing heatup task to cancel.")
+        except:
             await update.effective_message.reply_text("No ongoing heatup task to cancel.")
     else:
         await update.effective_message.reply_text("You are not allowed to use this bot")

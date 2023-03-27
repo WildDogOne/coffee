@@ -5,6 +5,7 @@ from ediplug import SmartPlug
 from data.creds import host, login, password, userid
 from data.functions import disable_plug, enable_plug
 from data.general import logger
+from functools import wraps
 
 from telegram import __version__ as TG_VER
 
@@ -27,6 +28,19 @@ from telegram.ext import Application, CommandHandler, ContextTypes
 heating = False
 
 
+def restricted(func):
+    @wraps(func)
+    def wrapped(update: Update, context: ContextTypes.DEFAULT_TYPE, *args, **kwargs):
+        user_id = update.effective_user.id
+        if user_id != userid:
+            update.message.reply_text("Unauthorized access. You are not allowed to use this bot.")
+            return
+        return func(update, context, *args, **kwargs)
+
+    return wrapped
+
+
+@restricted
 async def heatup(chat_id: int, update: Update, context: ContextTypes.DEFAULT_TYPE, timeout: int = 10) -> None:
     global heating
     heating = True
@@ -59,6 +73,7 @@ async def heatup(chat_id: int, update: Update, context: ContextTypes.DEFAULT_TYP
         await off(update=update, context=context)
 
 
+@restricted
 async def on(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user = update.effective_user.id
     if len(context.args) > 0:
@@ -87,6 +102,7 @@ async def on(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         await update.effective_message.reply_text("Error")
 
 
+@restricted
 async def off(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user = update.effective_user.id
     global heating
@@ -101,6 +117,7 @@ async def off(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         await update.effective_message.reply_text("Error")
 
 
+@restricted
 async def status(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user = update.effective_user.id
     try:
@@ -113,6 +130,7 @@ async def status(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         await update.effective_message.reply_text("Error")
 
 
+@restricted
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Sends explanation on how to use the bot."""
     await update.message.reply_text("Hi!\n"

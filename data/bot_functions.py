@@ -88,7 +88,7 @@ async def on(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             await update.effective_message.reply_text("Usage: /on <minutes> or just /on")
             return
     else:
-        timeout = 15
+        timeout = 10
     try:
         p = SmartPlug(host, (login, password))
         # context.task = asyncio.create_task(heatup(user, context=context))

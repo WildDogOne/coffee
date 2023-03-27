@@ -37,7 +37,7 @@ password = "your_smartplug_password"
 userid = your_telegram_user_id
 ```
 
-1. Set up the logging configuration in `data/general.py`:
+2. Set up the logging configuration in `data/general.py`:
 
 ```python
 import logging
@@ -62,7 +62,7 @@ logger.addHandler(handler)
 python coffee_machine_controller.py
 ```
 
-1. Use the following commands in the Telegram chat:
+2. Use the following commands in the Telegram chat:
 
 - `/on`: Turn on the coffee machine and start the heat-up process. Optionally, you can add a timeout (in minutes) after
   which the coffee machine will automatically turn off, e.g., `/on 20`.
@@ -70,7 +70,7 @@ python coffee_machine_controller.py
 - `/cancel`: Cancel the heat-up process if it's ongoing.
 - `/status`: Check the coffee machine's power consumption (in watts) and current (in amperes).
 
-1. In case you need to add the main function to run the script, you can use the following template:
+3. In case you need to add the main function to run the script, you can use the following template:
 
 ```python
 from telegram.ext import Updater
@@ -97,7 +97,7 @@ if __name__ == "__main__":
 
 Replace `YOUR_BOT_TOKEN` with your actual bot token.
 
-1. After setting up the main function, start the bot by running the script:
+4. After setting up the main function, start the bot by running the script:
 
 ```bash
 python coffee_machine_controller.py

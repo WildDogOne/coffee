@@ -45,7 +45,7 @@ class CustomApplication(Application):
         self.heatup_task = None
 
 
-@restricted
+#@restricted
 async def heatup(chat_id: int, update: Update, context: ContextTypes.DEFAULT_TYPE, timeout: int = 10) -> None:
     global heating
     heating = True

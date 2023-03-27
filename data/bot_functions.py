@@ -24,20 +24,19 @@ from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes
 
 # Dirty hack variable to check if machine is heating up or not.
-# Used to break the heatup task
 heating = False
 
 
 def restricted(func):
     @wraps(func)
-    def wrapped(update: Update, context: ContextTypes.DEFAULT_TYPE, *args, **kwargs):
-        user_id = update.effective_user.id
-        if user_id != userid:
-            update.message.reply_text("Unauthorized access. You are not allowed to use this bot.")
-            return
-        return func(update, context, *args, **kwargs)
+    async def wrapper(update: Update, context: ContextTypes.DEFAULT_TYPE, *args, **kwargs):
+        user = update.effective_user.id
+        if user == userid:
+            return await func(update, context, *args, **kwargs)
+        else:
+            await update.effective_message.reply_text("Unauthorized access. You are not allowed to use this bot.")
 
-    return wrapped
+    return wrapper
 
 
 class CustomApplication(Application):
@@ -46,7 +45,7 @@ class CustomApplication(Application):
         self.heatup_task = None
 
 
-# @restricted
+@restricted
 async def heatup(chat_id: int, update: Update, context: ContextTypes.DEFAULT_TYPE, timeout: int = 10) -> None:
     global heating
     heating = True
@@ -79,7 +78,7 @@ async def heatup(chat_id: int, update: Update, context: ContextTypes.DEFAULT_TYP
         await off(update=update, context=context)
 
 
-# @restricted
+@restricted
 async def on(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user = update.effective_user.id
     if len(context.args) > 0:
@@ -91,71 +90,58 @@ async def on(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     else:
         timeout = 15
     try:
-        if user == userid:
-            p = SmartPlug(host, (login, password))
-            # context.task = asyncio.create_task(heatup(user, context=context))
-            if heating:
-                await update.effective_message.reply_text(f"Already heating up, be patient!")
-            else:
-                enable_plug(p)
-                await update.effective_message.reply_text(f"Turned on the Coffeemaker")
-                await update.effective_message.reply_text(f"Now waiting for heatup to complete")
-                # context.application.create_task(heatup(user, context=context, timeout=timeout, update=update),update=update)
-                context.application.heatup_task = context.application.create_task(
-                    heatup(user, context=context, timeout=timeout, update=update))
+        p = SmartPlug(host, (login, password))
+        # context.task = asyncio.create_task(heatup(user, context=context))
+        if heating:
+            await update.effective_message.reply_text(f"Already heating up, be patient!")
         else:
-            await update.effective_message.reply_text("You are not allowed to use this bot")
+            enable_plug(p)
+            await update.effective_message.reply_text(f"Turned on the Coffeemaker")
+            await update.effective_message.reply_text(f"Now waiting for heatup to complete")
+            # context.application.create_task(heatup(user, context=context, timeout=timeout, update=update),update=update)
+            context.application.heatup_task = context.application.create_task(
+                heatup(user, context=context, timeout=timeout, update=update))
     except (IndexError, ValueError):
         await update.effective_message.reply_text("Error")
 
 
-# @restricted
+@restricted
 async def off(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    user = update.effective_user.id
     context.application.heatup_task.cancel()
+    global heating
+    heating = False
     try:
-        if user == userid:
-            p = SmartPlug(host, (login, password))
-            await update.effective_message.reply_text(disable_plug(p))
-        else:
-            await update.effective_message.reply_text("You are not allowed to use this bot")
+        p = SmartPlug(host, (login, password))
+        await update.effective_message.reply_text(disable_plug(p))
     except (IndexError, ValueError):
         await update.effective_message.reply_text("Error")
 
 
-# @restricted
+@restricted
 async def status(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    user = update.effective_user.id
-    try:
-        if user == userid:
-            p = SmartPlug(host, (login, password))
-            await update.effective_message.reply_text(f"Power: {p.power}w\nCurrent: {p.current}a")
-        else:
-            await update.effective_message.reply_text("You are not allowed to use this bot")
-    except (IndexError, ValueError):
-        await update.effective_message.reply_text("Error")
+    p = SmartPlug(host, (login, password))
+    await update.effective_message.reply_text(f"Power: {p.power}w\nCurrent: {p.current}a")
 
 
-# @restricted
+@restricted
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    user = update.effective_user.id
-    if user == userid:
-        try:
-            if context.application.heatup_task and not context.application.heatup_task.done():
-                context.application.heatup_task.cancel()
-                await update.effective_message.reply_text("Heatup cancelled.")
-            else:
-                await update.effective_message.reply_text("No ongoing heatup task to cancel.")
-        except:
+    try:
+        if context.application.heatup_task and not context.application.heatup_task.done():
+            context.application.heatup_task.cancel()
+            global heating
+            heating = False
+            await update.effective_message.reply_text("Heatup cancelled.")
+        else:
             await update.effective_message.reply_text("No ongoing heatup task to cancel.")
-    else:
-        await update.effective_message.reply_text("You are not allowed to use this bot")
+    except:
+        await update.effective_message.reply_text("No ongoing heatup task to cancel.")
 
 
-# @restricted
+@restricted
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Sends explanation on how to use the bot."""
     await update.message.reply_text("Hi!\n"
                                     "Use /on to start the coffee-machine\n"
                                     "Use /off to stop the coffee-machine\n"
+                                    "Use /cancel to stop the heatup task, without turning off the machine\n"
                                     "Or user /status to get the current power consumption")

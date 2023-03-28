@@ -45,7 +45,6 @@ class CustomApplication(Application):
         self.heatup_task = None
 
 
-#@restricted
 async def heatup(chat_id: int, update: Update, context: ContextTypes.DEFAULT_TYPE, timeout: int = 10) -> None:
     global heating
     heating = True
@@ -91,14 +90,12 @@ async def on(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         timeout = 10
     try:
         p = SmartPlug(host, (login, password))
-        # context.task = asyncio.create_task(heatup(user, context=context))
         if heating:
             await update.effective_message.reply_text(f"Already heating up, be patient!")
         else:
             enable_plug(p)
             await update.effective_message.reply_text(f"Turned on the Coffeemaker")
             await update.effective_message.reply_text(f"Now waiting for heatup to complete")
-            # context.application.create_task(heatup(user, context=context, timeout=timeout, update=update),update=update)
             context.application.heatup_task = context.application.create_task(
                 heatup(user, context=context, timeout=timeout, update=update))
     except (IndexError, ValueError):

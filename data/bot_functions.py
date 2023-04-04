@@ -66,10 +66,10 @@ async def heatup(chat_id: int, update: Update, context: ContextTypes.DEFAULT_TYP
             go = False
         else:
             logger.debug(f"Watt Check: {check_down}")
+    await context.bot.send_message(chat_id, text=f"Boilder Heatup Done!\nSetting Timer for Brewgroup")
+    await asyncio.sleep(5 * 60)
     if heating:
-        await context.bot.send_message(chat_id, text=f"Heatup Done!")
-    else:
-        await context.bot.send_message(chat_id, text=f"Heatup Stopped!")
+        await context.bot.send_message(chat_id, text=f"Brewgroup Hot")
 
     await asyncio.sleep(timeout * 60)
     if heating:

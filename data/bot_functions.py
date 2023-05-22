@@ -35,7 +35,6 @@ def restricted(func):
             return await func(update, context, *args, **kwargs)
         else:
             await update.effective_message.reply_text("Unauthorized access. You are not allowed to use this bot.")
-
     return wrapper
 
 
@@ -94,8 +93,8 @@ async def on(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             await update.effective_message.reply_text(f"Already heating up, be patient!")
         else:
             enable_plug(p)
-            await update.effective_message.reply_text(f"Turned on the Coffeemaker")
-            await update.effective_message.reply_text(f"Now waiting for heatup to complete")
+            await update.effective_message.reply_text(f"Turned on the Coffeemaker\n"
+                                                      f"Now waiting for heatup to complete")
             context.application.heatup_task = context.application.create_task(
                 heatup(user, context=context, timeout=timeout, update=update))
     except (IndexError, ValueError):

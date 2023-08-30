@@ -50,10 +50,11 @@ async def heatup(chat_id: int, update: Update, context: ContextTypes.DEFAULT_TYP
     check_down = 0
     while go and heating:
         await asyncio.sleep(10)
-        power = float(host.power)
-        current = float(host.current)
-        logger.info(f"{power} w - {current} a")
-        if power < 1000 and current < 6:
+        status = get_plug_status(host)
+        wats = float(status["Ws"])
+        amps = float(status["power"])
+        logger.info(f"{wats} w - {amps} a")
+        if wats < 1000 and amps < 6:
             check_down += 1
         elif check_down > 0:
             check_down -= 1

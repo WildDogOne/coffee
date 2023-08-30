@@ -1,7 +1,7 @@
 import asyncio
 
 from data.creds import host, userid
-from data.functions import disable_plug, enable_plug
+from data.functions import disable_plug, enable_plug, get_plug_status
 from data.general import logger
 from functools import wraps
 
@@ -113,7 +113,8 @@ async def off(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 @restricted
 async def status(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    await update.effective_message.reply_text(f"Power: {host.power}w\nCurrent: {host.current}a")
+    status = get_plug_status(host)
+    await update.effective_message.reply_text(f"Power: {status['Ws']}w\nCurrent: {status['power']}a")
 
 
 @restricted

@@ -21,10 +21,10 @@ def watch_heatup(host):
     while go:
         time.sleep(10)
         status = get_plug_status(host)
-        wats = float(status["Ws"])
-        amps = float(status["power"])
-        logger.info(f"{wats} w - {amps} a")
-        if wats < 1000 and amps < 6:
+        Ws = float(status["Ws"])
+        power = float(status["power"])
+        logger.info(f"{Ws} average since last call - {power} w")
+        if power < 800:
             check_down += 1
         elif check_down > 0:
             check_down -= 1

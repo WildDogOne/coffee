@@ -1,27 +1,30 @@
 import time
 from data.general import logger
+import requests
 
 
-def enable_plug(p):
-    logger.debug(f"Enabling: {p.power} - {p.current}")
-    if p.power == 0 and p.current == 0:
-        logger.debug("Turning on")
-        p.state = "ON"
-    else:
+def enable_plug(host):
+    status = get_plug_status(host)
+    logger.debug(f"Enabling: {status['power']} - {status['Ws']}")
+    if status["relay"]:
         logger.debug("Already on")
+    else:
+        logger.debug("Turning on")
+        requests.get(f"http://{host}/relay?state=1")
     logger.info("Turned on Smartplug")
     return True
 
 
-def watch_heatup(p):
+def watch_heatup(host):
     go = True
     check_down = 0
     while go:
         time.sleep(10)
-        power = float(p.power)
-        current = float(p.current)
-        logger.info(f"{power} w - {current} a")
-        if power < 1000 and current < 6:
+        status = get_plug_status(host)
+        wats = float(status["Ws"])
+        amps = float(status["power"])
+        logger.info(f"{wats} w - {amps} a")
+        if wats < 1000 and amps < 6:
             check_down += 1
         elif check_down > 0:
             check_down -= 1
@@ -32,12 +35,16 @@ def watch_heatup(p):
             logger.debug(f"Watt Check: {check_down}")
     return True
 
-def disable_plug(p):
-    if p.power == 0 and p.current == 0:
-        logger.info("Already Off")
-        p.state = "OFF"
-        return "Already Off"
-    else:
+def disable_plug(host):
+    status = get_plug_status(host)["relay"]
+    if status:
         logger.info("Turning off")
-        p.state = "OFF"
+        requests.get(f"http://{host}/relay?state=0").status_code
         return "Turned Off"
+    else:
+        logger.info("Already Off")
+        requests.get(f"http://{host}/relay?state=1").status_code
+        return "Already Off"
+
+def get_plug_status(host):
+    return requests.get(f"http://{host}/report").json()

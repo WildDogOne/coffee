@@ -1,8 +1,6 @@
 import asyncio
 
-from ediplug import SmartPlug
-
-from data.creds import host, login, password, userid
+from data.creds import host, userid
 from data.functions import disable_plug, enable_plug
 from data.general import logger
 from functools import wraps
@@ -48,13 +46,12 @@ async def heatup(chat_id: int, update: Update, context: ContextTypes.DEFAULT_TYP
     global heating
     heating = True
 
-    p = SmartPlug(host, (login, password))
     go = True
     check_down = 0
     while go and heating:
         await asyncio.sleep(10)
-        power = float(p.power)
-        current = float(p.current)
+        power = float(host.power)
+        current = float(host.current)
         logger.info(f"{power} w - {current} a")
         if power < 1000 and current < 6:
             check_down += 1
@@ -88,11 +85,10 @@ async def on(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     else:
         timeout = 10
     try:
-        p = SmartPlug(host, (login, password))
         if heating:
             await update.effective_message.reply_text(f"Already heating up, be patient!")
         else:
-            enable_plug(p)
+            enable_plug(host)
             await update.effective_message.reply_text(f"Turned on the Coffeemaker\n"
                                                       f"Now waiting for heatup to complete")
             context.application.heatup_task = context.application.create_task(
@@ -110,16 +106,14 @@ async def off(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     global heating
     heating = False
     try:
-        p = SmartPlug(host, (login, password))
-        await update.effective_message.reply_text(disable_plug(p))
+        await update.effective_message.reply_text(disable_plug(host))
     except (IndexError, ValueError):
         await update.effective_message.reply_text("Error")
 
 
 @restricted
 async def status(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    p = SmartPlug(host, (login, password))
-    await update.effective_message.reply_text(f"Power: {p.power}w\nCurrent: {p.current}a")
+    await update.effective_message.reply_text(f"Power: {host.power}w\nCurrent: {host.current}a")
 
 
 @restricted

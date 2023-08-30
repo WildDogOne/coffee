@@ -130,3 +130,5 @@ dmypy.json
 /data/creds.py
 .idea/
 /data/creds.py
+.vscode/launch.json
+.vscode/settings.json

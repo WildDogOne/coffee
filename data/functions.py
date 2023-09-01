@@ -43,7 +43,7 @@ def disable_plug(host):
         return "Turned Off"
     else:
         logger.info("Already Off")
-        requests.get(f"http://{host}/relay?state=1").status_code
+        requests.get(f"http://{host}/relay?state=0").status_code
         return "Already Off"
 
 def get_plug_status(host):
